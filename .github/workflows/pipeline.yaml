@@ -116,6 +116,12 @@ jobs:
       - name: Build resources
         run: sam build --template ${SAM_TEMPLATE} --use-container
 
+      - name: Debug OIDC Token Claims
+        run: |
+          TOKEN=$(curl -sLS "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" -H "User-Agent: actions/bash" -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" | jq -r '.value')
+          echo "=== Decoded OIDC Token Claims ==="
+          python3 -c "import sys, json, base64; token=sys.argv[1]; payload=token.split('.')[1]; payload += '=' * (-len(payload) % 4); print(json.dumps(json.loads(base64.urlsafe_b64decode(payload)), indent=2))" "$TOKEN"
+
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
         with:
